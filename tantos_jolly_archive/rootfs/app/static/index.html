@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tantos Архив</title>
+<style>
+:root{--bg:#0f1115;--card:#1b1f27;--mut:#8b93a7;--acc:#3b82f6;--call:#22c55e;--mot:#f59e0b;--txt:#e7ecf3;--line:#2a2f3a}
+@media (prefers-color-scheme:light){:root{--bg:#f4f6fa;--card:#fff;--mut:#5b6472;--txt:#1a2030;--line:#dce1ea}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--txt)}
+header{padding:10px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);z-index:5}
+h1{font-size:16px;margin:0 8px 0 0}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+button{background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-size:14px;cursor:pointer}
+button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.filters{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap;align-items:center}
+.wrap{display:grid;grid-template-columns:200px 1fr;gap:12px;padding:12px 16px}
+@media(max-width:640px){.wrap{grid-template-columns:1fr}}
+.col{background:var(--card);border-radius:12px;padding:8px;max-height:calc(100vh - 120px);overflow:auto}
+.lbl{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;margin:6px 4px 3px}
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px}
+.chip{padding:4px 9px;border-radius:7px;font-size:13px;cursor:pointer;border:1px solid var(--line);background:transparent}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.sep{height:1px;background:var(--line);margin:8px 2px}
+.day,.ev{padding:8px 10px;border-radius:8px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.day{cursor:pointer}
+.day:hover,.ev:hover{background:#80808022}
+.evtools{display:flex;gap:6px;align-items:center;margin-bottom:8px;position:sticky;top:0;background:var(--card);padding:2px 0 6px;z-index:1}
+.evtools button{padding:5px 10px;font-size:13px}
+.evchk{width:17px;height:17px;flex:0 0 auto;cursor:pointer;margin:0}
+.evmain{display:flex;gap:8px;align-items:center;flex:1 1 auto;cursor:pointer}
+.evside{margin-left:auto;white-space:nowrap}
+.lk{font-size:12px;vertical-align:-1px}
+.hint{font-size:11px;color:var(--mut);padding:0 4px 8px;line-height:1.45}
+.hint code{background:#80808033;padding:1px 4px;border-radius:4px;font-size:10px}
+.day.on{background:var(--acc);color:#fff}
+.badge{font-size:11px;padding:2px 7px;border-radius:10px}
+.call{background:var(--call);color:#042}
+.motion{background:var(--mot);color:#431}
+.ev .t{font-variant-numeric:tabular-nums}
+.ev.viewed{opacity:.5}
+#player{margin-top:10px}
+video{width:100%;border-radius:10px;background:#000}
+.muted{color:var(--mut);font-size:12px;padding:8px}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;opacity:.7;animation:s .7s linear infinite;vertical-align:-2px}
+#refresh.busy{animation:s .7s linear infinite;pointer-events:none;opacity:.65}
+.evload{margin-left:8px;font-size:12px;opacity:.85;white-space:nowrap}
+.ev.loading{opacity:.9}
+.ev.playing{background:#80808033;box-shadow:inset 3px 0 0 var(--acc)}
+.ev.playing.viewed{opacity:1}
+@keyframes s{to{transform:rotate(360deg)}}
+.overlay{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:20}
+.overlay.on{display:flex}
+.modal{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;width:min(420px,92vw);max-height:88vh;overflow:auto}
+.modal h2{font-size:16px;margin:0 0 12px}
+.frow{margin:10px 0}
+.frow label{display:block;font-size:12px;color:var(--mut);margin-bottom:4px}
+.frow input[type=text],.frow input[type=number]{width:100%;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--txt);font-size:14px}
+.chk{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:14px}
+.mrow{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Tantos Архив</h1>
+  <div class="tabs" id="chans"></div>
+  <div class="filters">
+    <button data-t="all" class="ft on">Все</button>
+    <button data-t="call" class="ft">Вызовы</button>
+    <button data-t="motion" class="ft">Движение</button>
+    <button id="unv">Непросмотр.</button>
+    <button id="arm" title="Только клипы, снятые когда включена охрана (Alarmo)">🔒 Охрана</button>
+    <button id="refresh" title="Обновить индекс">⟳</button>
+    <button id="gear" title="Настройки">⚙</button>
+  </div>
+</header>
+<div class="wrap">
+  <div class="col" id="left"><div class="muted">загрузка…</div></div>
+  <div class="col">
+    <div id="events"><div class="muted">выберите дату</div></div>
+    <div id="player"></div>
+  </div>
+</div>
+
+<div class="overlay" id="ov">
+  <div class="modal">
+    <h2>Настройки</h2>
+    <div class="frow">
+      <label>Каналы в интерфейсе</label>
+      <div id="setChans"></div>
+    </div>
+    <div class="frow"><label>IP адрес хаба</label><input type="text" id="setHubIp" placeholder="192.168.0.27"></div>
+    <div class="frow"><label>Локальный кэш, Гб</label><input type="number" id="setCache" min="1" step="1"></div>
+    <div class="frow"><label>Хранить клипы, дней</label><input type="number" id="setRet" min="1" step="1"></div>
+    <div class="frow"><label>Авто-обновление списка, сек</label><input type="number" id="setRefresh" min="10" step="10"></div>
+    <div class="frow"><label>Сущность охраны</label><input type="text" id="setAlarm" list="alarmList" placeholder="alarm_control_panel.alarmo (пусто = выкл)" autocomplete="off"><datalist id="alarmList"></datalist></div>
+    <div class="frow"><label>Состояние «снято с охраны»</label><input type="text" id="setDisarmed" list="disarmedList" placeholder="disarmed" autocomplete="off"><datalist id="disarmedList"><option value="disarmed"></option><option value="off"></option></datalist></div>
+    <div class="frow"><label>Опрос охраны, мин</label><input type="number" id="setAlarmPoll" min="1" step="1"></div>
+    <div class="hint">Сущность — <b>любая</b>: очистите поле и начните вводить, появятся подсказки (<code>alarm_control_panel</code>, <code>input_boolean</code>, <code>binary_sensor</code>, <code>switch</code>), либо впишите свой <code>entity_id</code>. Пусто = выключить. «Снято с охраны»: для панели — <code>disarmed</code>, для переключателя/сенсора — <code>off</code>. Всё остальное считается «на охране».</div>
+    <div class="mrow"><button id="setCancel">Отмена</button><button id="setSave" class="on">Сохранить</button></div>
+    <div class="muted" id="setMsg"></div>
+  </div>
+</div>
+
+<script>
+const MON=["","янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
+const S={chan:null,type:"all",unv:0,armed:0,year:null,month:null,day:null,sel:new Set(),curEvs:[]};
+const $=s=>document.querySelector(s), ce=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
+async function j(u,o){const r=await fetch(u,o);if(!r.ok)throw new Error(await r.text());return r.json()}
+const qp=()=>`channel=${encodeURIComponent(S.chan)}&type=${S.type}&unviewed=${S.unv}&armed=${S.armed}`;
+
+async function loadChans(){
+  const cs=await j("api/channels");const box=$("#chans");box.innerHTML="";
+  if(!cs.length){box.innerHTML='<span class="muted">нет каналов</span>';return}
+  if(!cs.includes(S.chan))S.chan=cs[0];
+  cs.forEach(c=>{const b=ce("button","ch"+(c==S.chan?" on":""),c);b.onclick=()=>{S.chan=c;S.day=null;document.querySelectorAll(".ch").forEach(x=>x.classList.toggle("on",x.textContent==c));loadYears()};box.appendChild(b)});
+  loadYears();
+}
+async function loadYears(){
+  $("#left").innerHTML='<div class="muted"><span class="spin"></span> загрузка…</div>';
+  try{
+    const ys=await j(`api/years?${qp()}`);
+    if(!ys.length){$("#left").innerHTML='<div class="muted">нет записей по фильтру</div>';$("#events").innerHTML='<div class="muted">—</div>';$("#player").innerHTML="";return}
+    if(!ys.includes(S.year))S.year=ys[0];
+    renderLeft(ys,[],[]);
+    await loadMonths();
+  }catch(e){$("#left").innerHTML='<div class="muted">ошибка: '+e.message+'</div>'}
+}
+async function loadMonths(){
+  const ms=await j(`api/months?${qp()}&year=${S.year}`);
+  if(!ms.includes(S.month))S.month=ms.length?ms[0]:null;
+  const ys=[...document.querySelectorAll('#yrow .chip')].map(x=>+x.dataset.v);
+  renderLeft(ys,ms,[]);
+  await loadDays();
+}
+async function loadDays(){
+  let ds=[];
+  if(S.month)ds=await j(`api/days?${qp()}&year=${S.year}&month=${S.month}`);
+  if(S.day&&!ds.includes(+S.day.split("-")[2]))S.day=null;
+  const ys=[...document.querySelectorAll('#yrow .chip')].map(x=>+x.dataset.v);
+  const ms=[...document.querySelectorAll('#mrow .chip')].map(x=>+x.dataset.v);
+  renderLeft(ys,ms,ds);
+  if(S.day)loadEvents();else{$("#events").innerHTML='<div class="muted">выберите день</div>';$("#player").innerHTML=""}
+}
+function renderLeft(ys,ms,ds){
+  const box=$("#left");box.innerHTML="";
+  box.appendChild(ce("div","lbl","Год"));
+  const yr=ce("div","chips");yr.id="yrow";
+  ys.forEach(y=>{const c=ce("div","chip"+(y==S.year?" on":""),y);c.dataset.v=y;c.onclick=()=>{S.year=y;S.month=null;S.day=null;loadMonths()};yr.appendChild(c)});
+  box.appendChild(yr);
+  box.appendChild(ce("div","lbl","Месяц"));
+  const mr=ce("div","chips");mr.id="mrow";
+  ms.forEach(m=>{const c=ce("div","chip"+(m==S.month?" on":""),MON[m]);c.dataset.v=m;c.onclick=()=>{S.month=m;S.day=null;loadDays()};mr.appendChild(c)});
+  box.appendChild(mr);
+  box.appendChild(ce("div","sep"));
+  box.appendChild(ce("div","lbl","День"));
+  if(!ds.length){box.appendChild(ce("div","muted","—"))}
+  ds.forEach(d=>{const ds2=`${S.year}-${String(S.month).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    const el=ce("div","day"+(ds2==S.day?" on":""),`<span>${String(d).padStart(2,"0")}.${String(S.month).padStart(2,"0")}</span>`);
+    el.onclick=()=>{S.day=ds2;document.querySelectorAll(".day").forEach(x=>x.classList.remove("on"));el.classList.add("on");loadEvents()};
+    box.appendChild(el)});
+}
+async function loadEvents(){
+  $("#events").innerHTML='<div class="muted"><span class="spin"></span> загрузка…</div>';$("#player").innerHTML="";
+  S.sel=new Set();
+  try{
+    const evs=await j(`api/events?${qp()}&date=${S.day}`);
+    S.curEvs=evs;
+    const box=$("#events");box.innerHTML="";
+    if(!evs.length){box.innerHTML='<div class="muted">нет событий по фильтру</div>';return}
+    const tools=ce("div","evtools");
+    tools.innerHTML='<button id="selall">Выбрать все</button><button id="dl" disabled>Скачать</button>';
+    box.appendChild(tools);
+    const list=ce("div");box.appendChild(list);
+    evs.forEach(e=>{
+      const el=ce("div","ev"+(e.viewed?" viewed":""));
+      const cb=ce("input","evchk");cb.type="checkbox";
+      cb.onclick=(ev)=>{ev.stopPropagation();if(cb.checked)S.sel.add(e.ts);else S.sel.delete(e.ts);updDl()};
+      const tp=e.type=="call"?'<span class="badge call">вызов</span>':'<span class="badge motion">движение</span>';
+      const lk=e.armed?'<span class="lk" title="Снято на охране (Alarmo)">🔒</span> ':'';
+      const info=ce("span","evmain",`<span class="t">${e.ts.split(" ")[1]}</span><span class="evside">${lk}${tp} <small>${e.dur}с</small></span>`);
+      info.onclick=()=>playEv(e,el);
+      el.appendChild(cb);el.appendChild(info);list.appendChild(el);
+    });
+    $("#selall").onclick=toggleAll;$("#dl").onclick=doDownload;updDl();
+  }catch(e){$("#events").innerHTML='<div class="muted">ошибка: '+e.message+'</div>'}
+}
+function updDl(){const dl=$("#dl");if(!dl)return;const n=S.sel.size;dl.textContent=n?`Скачать (${n})`:"Скачать";dl.disabled=!n}
+function toggleAll(){
+  const all=S.curEvs.map(e=>e.ts);const allsel=S.sel.size===all.length&&all.length>0;
+  S.sel=new Set(allsel?[]:all);
+  document.querySelectorAll(".evchk").forEach(cb=>cb.checked=!allsel);
+  $("#selall").textContent=allsel?"Выбрать все":"Снять все";updDl();
+}
+async function doDownload(){
+  const sel=[...S.sel];if(!sel.length)return;
+  if(sel.length>15 && !confirm(`Выбрано ${sel.length} клипов. Не кэшированные извлекаются ~20с каждый — до ~${Math.ceil(sel.length*20/60)} мин. Продолжить?`))return;
+  const dl=$("#dl");dl.disabled=true;
+  for(let i=0;i<sel.length;i++){dl.textContent=`Извлекаю ${i+1}/${sel.length}…`;
+    try{await j(`api/play?channel=${encodeURIComponent(S.chan)}&ts=${encodeURIComponent(sel[i])}`,{method:"POST"})}catch(e){}
+  }
+  dl.textContent="Скачивание…";
+  const q=encodeURIComponent(sel.join(";"));
+  const a=document.createElement("a");a.href=`api/export?channel=${encodeURIComponent(S.chan)}&ts=${q}`;a.download="";
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(loadEvents,2000);
+}
+let playSeq=0,curAbort=null;
+async function playEv(e,el){
+  if(el.classList.contains("loading"))return;          // this clip is already loading → ignore
+  const myseq=++playSeq;
+  if(curAbort)curAbort.abort();                         // cancel any previous in-flight load
+  const ac=new AbortController();curAbort=ac;
+  document.querySelectorAll(".ev.loading").forEach(x=>{ // drop the superseded row's indicator
+    x.classList.remove("loading");const s=x.querySelector(".evload");if(s)s.remove();});
+  el.classList.add("loading");
+  const st=ce("span","evload",'<span class="spin"></span> Загрузка...');
+  const t=el.querySelector(".t");                       // indicator right AFTER the time;
+  if(t)t.insertAdjacentElement("afterend",st);          // the badge/seconds column (.evside) stays put
+  else (el.querySelector(".evmain")||el).appendChild(st);
+  $("#player").innerHTML='<div class="muted"><span class="spin"></span> извлекаю клип…</div>';
+  try{const r=await j(`api/play?channel=${encodeURIComponent(S.chan)}&ts=${encodeURIComponent(e.ts)}`,{method:"POST",signal:ac.signal});
+    if(myseq!==playSeq)return;                          // a newer clip was clicked → drop this result
+    $("#player").innerHTML=`<video controls autoplay src="${r.url}"></video><div class="muted">${S.chan} · ${e.ts} · ${e.type=="call"?"вызов":"движение"}</div>`;
+    el.classList.add("viewed");                          // mark viewed ONLY after a real, non-superseded show
+    j(`api/viewed?channel=${encodeURIComponent(S.chan)}&ts=${encodeURIComponent(e.ts)}&v=1`,{method:"POST"}).catch(()=>{});
+    document.querySelectorAll(".ev.playing").forEach(x=>x.classList.remove("playing"));
+    el.classList.add("playing");                        // keep THIS row highlighted = now playing
+    $("#player").scrollIntoView({behavior:"smooth",block:"start"});   // jump to the player
+  }catch(err){
+    if(err.name==="AbortError"||myseq!==playSeq)return; // superseded → stay silent
+    $("#player").innerHTML='<div class="muted">не удалось извлечь: '+err.message+'</div>';
+  }finally{el.classList.remove("loading");st.remove();}
+}
+document.querySelectorAll(".ft").forEach(b=>b.onclick=()=>{document.querySelectorAll(".ft").forEach(x=>x.classList.remove("on"));b.classList.add("on");S.type=b.dataset.t;loadYears()});
+$("#unv").onclick=()=>{S.unv=S.unv?0:1;$("#unv").classList.toggle("on",!!S.unv);loadYears()};
+$("#arm").onclick=()=>{S.armed=S.armed?0:1;$("#arm").classList.toggle("on",!!S.armed);loadYears()};
+$("#refresh").onclick=async()=>{const b=$("#refresh");if(b.classList.contains("busy"))return;b.classList.add("busy");$("#left").innerHTML='<div class="muted"><span class="spin"></span> обновляю индекс…</div>';$("#events").innerHTML="";$("#player").innerHTML="";try{await j("api/refresh",{method:"POST"})}catch(e){alert("Не удалось обновить индекс: "+(e.message||e))}b.classList.remove("busy");await loadYears()};
+
+// ---- settings ----
+$("#gear").onclick=async()=>{
+  try{const s=await j("api/settings");
+    const box=$("#setChans");box.innerHTML="";
+    const vis=s.visible_channels.length?s.visible_channels:s.mapped_channels;
+    s.all_channels.forEach(c=>{const n=s.map_counts[c]||0;const row=ce("label","chk");
+      row.innerHTML=`<input type="checkbox" value="${c}" ${vis.includes(c)?"checked":""}> ${c} <small class="muted">${n?n+" файл.":"нет данных"}</small>`;
+      box.appendChild(row)});
+    $("#setHubIp").value=s.hub_ip;$("#setCache").value=s.cache_max_gb;$("#setRet").value=s.cache_retention_days;$("#setRefresh").value=s.refresh_sec;
+    // free entity choice + state meaning "disarmed"; datalist gives suggestions
+    $("#setAlarm").value=s.alarm_entity||"";
+    $("#setDisarmed").value=s.alarm_disarmed_state||"disarmed";
+    $("#setAlarmPoll").value=Math.max(1,Math.round((s.alarm_poll_sec||900)/60));
+    const dl=$("#alarmList");dl.innerHTML="";
+    try{(await j("api/alarm_entities")).forEach(en=>{const o=document.createElement("option");o.value=en.id;o.label=`${en.name} (${en.state})`;dl.appendChild(o)})}catch(_){}
+    $("#setMsg").textContent="";$("#ov").classList.add("on");
+  }catch(e){alert("Ошибка настроек: "+e.message)}
+};
+$("#setCancel").onclick=()=>$("#ov").classList.remove("on");
+$("#ov").onclick=e=>{if(e.target.id=="ov")$("#ov").classList.remove("on")};
+$("#setSave").onclick=async()=>{
+  const chans=[...document.querySelectorAll('#setChans input:checked')].map(x=>x.value);
+  const body={visible_channels:chans,hub_ip:$("#setHubIp").value.trim(),cache_max_gb:+$("#setCache").value,cache_retention_days:+$("#setRet").value,refresh_sec:+$("#setRefresh").value,alarm_entity:$("#setAlarm").value.trim(),alarm_disarmed_state:$("#setDisarmed").value.trim(),alarm_poll_sec:Math.max(1,+$("#setAlarmPoll").value||15)*60};
+  $("#setMsg").innerHTML='<span class="spin"></span> сохраняю…';
+  try{await j("api/settings",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    $("#ov").classList.remove("on");S.year=S.month=S.day=null;await loadChans();
+  }catch(e){$("#setMsg").textContent="Ошибка: "+e.message}
+};
+loadChans();
+</script>
+</body>
+</html>

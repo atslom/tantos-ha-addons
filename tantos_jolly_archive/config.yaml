@@ -1,0 +1,44 @@
+name: "Tantos Jolli Archive"
+description: "Удалённый архив записей видеопанелей Tantos Jolli (Панель 2/3, Камера 3) — список по каналу и типу (вызов/движение) с реальными датами, просмотр и кэш."
+version: "0.4.4"
+slug: tantos_jolly_archive
+init: false
+arch:
+  - aarch64
+  - amd64
+startup: application
+boot: manual
+host_network: true
+homeassistant_api: true   # read Alarmo arm-state history from HA Core API (mark "on-guard" clips)
+ingress: true
+ingress_port: 8099
+panel_icon: mdi:cctv
+panel_title: "Tantos Архив"
+panel_admin: false   # show the sidebar panel to NON-admin users too (default is admin-only)
+map:
+  - media:rw
+  - share:rw
+# These are only INITIAL defaults. Hub IP / cache size / visible channels are
+# editable live in the App's own ⚙ settings (persisted in /data/app_settings.json).
+options:
+  hub_ip: "192.168.0.27"
+  hub_user: "root"
+  hub_pass: ""
+  self_ip: "192.168.0.32"
+  cache_max_gb: 20
+  cache_retention_days: 30
+  refresh_sec: 90
+  alarm_entity: "alarm_control_panel.alarmo"
+  alarm_disarmed_state: "disarmed"
+  alarm_poll_sec: 900
+schema:
+  hub_ip: str
+  hub_user: str
+  hub_pass: password
+  self_ip: str
+  cache_max_gb: int
+  cache_retention_days: int
+  refresh_sec: int
+  alarm_entity: str?
+  alarm_disarmed_state: str?
+  alarm_poll_sec: int?
